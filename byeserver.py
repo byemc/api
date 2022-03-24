@@ -1,22 +1,13 @@
 from mcstatus import MinecraftServer
 import json
 
-# You can pass the same address you'd enter into the address field in minecraft into the 'lookup' function
-# If you know the host and port, you may skip this and use MinecraftServer("example.org", 1234)
-server = MinecraftServer.lookup("mc.byecorps.com")
-
-# Compile it into a dict
-status = server.status()
-latency = server.ping()
-query = server.query()
-
-def getPlayers():
+def getPlayers(query):
     players = []
     for player in query.players.names:
         players.append(player)
     return players
 
-def toDir():
+def toDir(status, server, query, playerArray):
     serverinfo = {
         "status": {
             "players": {
@@ -31,7 +22,7 @@ def toDir():
             "players": {
                 "max": status.players.max,
                 "online": status.players.online,
-                "names": getPlayers()
+                "names": playerArray,
             },
             "online": status.players.online
         },
