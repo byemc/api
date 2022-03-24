@@ -1,8 +1,10 @@
-from flask import Flask
+from urllib import response
+from flask import Flask, request, jsonify
 import json
 import byeserver
 import time
 from mcstatus import MinecraftServer
+import socket
 app = Flask(__name__)
 
 
@@ -13,10 +15,17 @@ def showInfo():
     # If you know the host and port, you may skip this and use MinecraftServer("example.org", 1234)
     server = MinecraftServer.lookup("mc.byecorps.com")
 
-    # Compile it into a dict
-    status = server.status()
-    latency = server.ping()
-    query = server.query()
+    try:
+        # Compile it into a dict
+        status = server.status()
+        latency = server.ping()
+        query = server.query()
+    except socket.timeout:
+        # Return a 503, service unavailable
+        return jsonify({"error": "Server timed out and might be down.", "code": 503}), 503
+
+
+
 
     playerArray = byeserver.getPlayers(query)
     serverinfo = byeserver.toDir(status, server, query, playerArray)
