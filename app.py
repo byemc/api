@@ -36,7 +36,7 @@ def showInfo():
         return jsonify({"error": "Server is probably offline"}, status=503), 503
 
     serverinfo = byeserver.toDir(status, server, query)
-    return json.dumps(serverinfo)
+    return jsonify(serverinfo)
 
 @app.route("/humanreadable")
 def showHumanReadable():
