@@ -62,7 +62,17 @@ def isPlayerOnline(username):
     else:
         return jsonify({"online": False})
     
+@app.route("/status/json")
+def serverUpDown():
+    info = getServerInfo()
+    if info[0] is None:
+        return jsonify({"online": False})
+    else:
+        return jsonify({"online": True})
 
+@app.route("/status/")
+def serverStatusRedirect():
+    return simpleHTMLRedirect("https://status.byecorps.com/")
 
 @app.errorhandler(404)
 def page_not_found(e):
