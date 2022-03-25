@@ -7,25 +7,23 @@ def getPlayers(query):
         players.append(player)
     return players
 
-def toDir(status, server, query, playerArray):
+def toDir(status, server, query):
     serverinfo = {
         "status": {
-            "players": {
-                "online": status.players.online,
-            },
-            "latency":  status.latency
-        },
-        "query": {
+            "online": status.players.online,
             "desc": status.description,
             "version": status.version.name,
             "protocol": status.version.protocol,
             "players": {
                 "max": status.players.max,
                 "online": status.players.online,
-                "names": playerArray,
+                
             },
-            "online": status.players.online
         },
-        "latency": server.ping()
+        "query": {
+            "players": {
+                "names": list(query.players.names),
+            },
+        },
     }
     return serverinfo
