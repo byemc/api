@@ -4,8 +4,26 @@ import byeserver
 import time
 from mcstatus import MinecraftServer
 import socket
+from git import Repo
 import parsetheJSON
+
 app = Flask(__name__)
+
+repo = Repo(".")
+
+def getRepoInfo():
+    # returns a tuple of (commit, author, date, branch)
+
+    # Get the current commit
+    commit = repo.head.commit
+    commit_id = commit.hexsha
+    commit_message = commit.message
+    commit_author = commit.author.name
+    commit_date = commit.authored_datetime
+    commit_branch = repo.active_branch.name
+
+    return (commit_id, commit_message, commit_author, commit_date, commit_branch)
+    
 
 def getServerInfo():
     # You can pass the same address you'd enter into the address field in minecraft into the 'lookup' function
@@ -69,6 +87,18 @@ def serverUpDown():
         return jsonify({"online": False})
     else:
         return jsonify({"online": True})
+
+@app.route("/info")
+def apiInfo():
+    # Returns a JSON object with the git commit hash, and date of the commit
+
+    # Get the short commit hash
+    commitShortHash = repo.head.commit.hexsha[:7]
+    
+    # Get the commit time
+    commitDate = repo.head.commit.authored_datetime
+
+    return jsonify({"verison": f"{commitShortHash}", "committed": f"{commitDate}"})
 
 @app.route("/status/")
 def serverStatusRedirect():
