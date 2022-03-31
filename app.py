@@ -1,92 +1,38 @@
 from flask import Flask, request, jsonify
 import json
-import byeserver
+import server as mcs
 import time
 from mcstatus import MinecraftServer
 import socket
 from git import Repo
-import parsetheJSON
 
 app = Flask(__name__)
-
 repo = Repo(".")
-
-def getRepoInfo():
-    # returns a tuple of (commit, author, date, branch)
-
-    # Get the current commit
-    commit = repo.head.commit
-    commit_id = commit.hexsha
-    commit_message = commit.message
-    commit_author = commit.author.name
-    commit_date = commit.authored_datetime
-    commit_branch = repo.active_branch.name
-
-    return (commit_id, commit_message, commit_author, commit_date, commit_branch)
-    
-
-def getServerInfo():
-    # You can pass the same address you'd enter into the address field in minecraft into the 'lookup' function
-    # If you know the host and port, you may skip this and use MinecraftServer("example.org", 1234)
-    server = MinecraftServer.lookup("mc.byecorps.com")
-
-    try:
-        status = server.status()
-        latency = server.ping()
-        query = server.query()
-    except socket.timeout:
-        return (None, None, None, server)
-    
-    return (status, latency, query, server)
 
 def simpleHTMLRedirect(url):
     return "<html><head><meta http-equiv=\"refresh\" content=\"0; url=" + url + "\"></head></html>"
 
-@app.route('/')
-def showInfo():
-    
-    info = getServerInfo()
-    status = info[0]
-    latency = info[1]
-    query = info[2]
-    server = info[3]
-    if status is None:
-        return jsonify({"error": "Server is probably offline"}, status=503), 503
+# This first one is for servers that use TCP to redirect requests by Minecraft to the domain to the server's IP.
+@app.route('/mcserver/<server>', methods=['GET'])
+def serverTCPNoPort(server):
+    # creates a server object
+    server = MinecraftServer.lookup(f"{server}:25565")
 
-    serverinfo = byeserver.toDir(status, server, query)
-    return jsonify(serverinfo)
+    serverInfo = mcs.returnMCInfo(server)
 
-@app.route("/humanreadable")
-def showHumanReadable():
-    response = showInfo()
-    return parsetheJSON.produceDebugString(response)
-
-# Anywhere in the /docs/ directory, including the root, will redirect to the documentation
-@app.route("/docs/<path:path>")
-def redirectToDocs(path):
-    return simpleHTMLRedirect("https://byecorps.com/byes-server/docs/" + path)
-
-@app.route("/player/<username>")
-def isPlayerOnline(username):
-    '''Checks if the username, which should not be case sensitive, is online'''
-    info = getServerInfo()
-    query = info[2]
-    if info[0] is None:
-        return jsonify({"error": "Server is probably offline"}, status=503), 503
-        
-    players = byeserver.getPlayers(query)
-    if username.lower() in [player.lower() for player in players]:
-        return jsonify({"online": True})
+    if "code" in serverInfo:
+        code = serverInfo["code"]
     else:
-        return jsonify({"online": False})
-    
-@app.route("/status/json")
-def serverUpDown():
-    info = getServerInfo()
-    if info[0] is None:
-        return jsonify({"online": False})
-    else:
-        return jsonify({"online": True})
+        code = 200
+
+    return jsonify(serverInfo), code
+
+# misc
+@app.route("/")
+def index():
+    # Redirects to the website.
+    return simpleHTMLRedirect("https://byecorps.com/api")
+
 
 @app.route("/info")
 def apiInfo():
